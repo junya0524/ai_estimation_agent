@@ -1,0 +1,9 @@
+{
+  "graphs": {
+    "ai_estimation_agent": {
+      "entrypoint": "ai_logic.decision_graph.app_graph",
+      "env": ".env",
+      "python_path": "."
+    }
+  }
+}
