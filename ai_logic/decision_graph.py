@@ -1,37 +1,46 @@
 from langgraph.graph import StateGraph, END
 from typing import TypedDict
-import os, sys
+from ai_logic.estimation_nodes import ai_estimation_node  # 👈 ここでAIノードを読み込む
 
-# パス設定
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
-from estimation.fp_model import estimate_fp
-
-
-# LangGraphで扱う状態
+# LangGraphで扱う状態（State）
 class EstimationState(TypedDict):
     method: str
     result: dict
+    user_input: dict  # Streamlitから渡ってくる入力データ
 
-
-# FP法での見積もりノード
-def start_node(state: EstimationState):
-    print("📘 開始：FP法を使用して見積もりを計算します")
-    result = estimate_fp(3, 2, 1, 4, 2)
-    return {"method": "FP法", "result": result}
-
-
-# ✅ LangGraph用のグラフをここで定義（←ここが重要）
+# ===== LangGraphの構成 =====
 app_graph = StateGraph(state_schema=EstimationState)
 
-app_graph.add_node("start", start_node)
-app_graph.set_entry_point("start")
-app_graph.add_edge("start", END)
+# ノード追加（AI見積もりノード）
+app_graph.add_node("ai_estimation", ai_estimation_node)
 
-# LangGraphが読み取れるようにcompileしておく
+# 開始ノード設定
+app_graph.set_entry_point("ai_estimation")
+
+# 終了ノード設定
+app_graph.add_edge("ai_estimation", END)
+
+# Graphをコンパイル
 app_graph = app_graph.compile()
 
+# テスト実行（単体確認用）
 if __name__ == "__main__":
-    result = app_graph.invoke({"method": "", "result": {}})
-    print(result)
+    dummy_input = {
+        "fp": 100,
+        "loc": 2000,
+        "functions": 10,
+        "screens": 8,
+        "tables": 5,
+        "hardware": "Windows Server",
+        "os": "Windows 11",
+        "tools": "Python, Streamlit",
+        "environment": "VSCode",
+        "application_type": "業務システム",
+        "complexity": "中",
+        "lifecycle": "新規開発",
+        "team_skill": "中級",
+        "work_hours": 160
+    }
 
+    result = app_graph.invoke({"method": "", "result": {}, "user_input": dummy_input})
+    print(result)
